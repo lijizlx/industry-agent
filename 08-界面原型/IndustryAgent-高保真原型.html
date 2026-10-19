@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndustryAgent 工业智能体平台 · 芯联半导体</title>
+<style>
+:root{
+  --bg:#0b0f14; --bg2:#111823; --panel:#141d2b; --panel2:#182335;
+  --line:#233247; --line2:#2c3e58;
+  --txt:#e6edf5; --txt2:#9db0c7; --txt3:#64778f;
+  --pri:#2f7bff; --pri2:#5c9bff; --pri-bg:rgba(47,123,255,.12);
+  --ok:#2fbf71; --ok-bg:rgba(47,191,113,.12);
+  --warn:#f5a623; --warn-bg:rgba(245,166,35,.12);
+  --err:#f0564f; --err-bg:rgba(240,86,79,.12);
+  --purple:#9b6cff; --teal:#2fc9c9;
+  --radius:10px;
+  font-size:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;min-height:100vh;overflow-x:hidden}
+a{color:var(--pri2);text-decoration:none}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2a3a52;border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============ 登录页 ============ */
+#login-mask{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 600px at 20% 10%,#12233f 0%,#0b0f14 55%);}
+.login-card{width:400px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:40px 36px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.login-logo{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:8px}
+.login-logo .cube{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px}
+.login-logo h1{font-size:20px;letter-spacing:1px}
+.login-sub{text-align:center;color:var(--txt3);font-size:12px;margin-bottom:28px}
+.login-card label{display:block;color:var(--txt2);font-size:12px;margin:14px 0 6px}
+.login-card input{width:100%;height:40px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:0 12px;font-size:14px;outline:none;transition:.2s}
+.login-card input:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-bg)}
+.login-role{display:flex;gap:8px;margin-top:16px}
+.login-role span{flex:1;text-align:center;padding:7px 0;border:1px solid var(--line);border-radius:8px;color:var(--txt2);font-size:12px;cursor:pointer;transition:.2s}
+.login-role span.on{border-color:var(--pri);color:var(--pri2);background:var(--pri-bg)}
+.btn-login{width:100%;height:42px;margin-top:24px;border:none;border-radius:8px;background:linear-gradient(90deg,var(--pri),var(--pri2));color:#fff;font-size:15px;cursor:pointer;letter-spacing:4px;transition:.2s}
+.btn-login:hover{filter:brightness(1.12)}
+.login-foot{margin-top:18px;text-align:center;color:var(--txt3);font-size:11px}
+
+/* ============ 布局 ============ */
+#app{display:none}
+#app.on{display:flex;min-height:100vh}
+aside{width:220px;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;z-index:10}
+.side-logo{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid var(--line)}
+.side-logo .cube{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--pri),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px}
+.side-logo b{font-size:14px}
+.side-logo small{display:block;color:var(--txt3);font-size:10px;font-weight:400}
+nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-group{color:var(--txt3);font-size:11px;padding:14px 10px 6px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--txt2);cursor:pointer;transition:.15s;font-size:13.5px;margin-bottom:2px}
+.nav-item:hover{background:var(--panel2);color:var(--txt)}
+.nav-item.on{background:var(--pri-bg);color:var(--pri2);font-weight:600}
+.nav-item .ic{width:18px;text-align:center}
+.nav-item .badge{margin-left:auto;background:var(--err);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px}
+.side-foot{padding:14px 16px;border-top:1px solid var(--line);color:var(--txt3);font-size:11px;line-height:1.7}
+main{flex:1;margin-left:220px;display:flex;flex-direction:column}
+header{height:56px;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:9}
+.crumb{color:var(--txt3);font-size:13px}
+.crumb b{color:var(--txt);font-weight:600}
+.hd-right{margin-left:auto;display:flex;align-items:center;gap:18px}
+.hd-search{background:var(--bg);border:1px solid var(--line);border-radius:8px;height:32px;width:240px;display:flex;align-items:center;padding:0 10px;gap:8px;color:var(--txt3);font-size:12px}
+.bell{position:relative;cursor:pointer;font-size:17px}
+.bell .dot{position:absolute;top:-4px;right:-7px;background:var(--err);color:#fff;font-size:10px;padding:0 5px;border-radius:8px}
+.hd-user{display:flex;align-items:center;gap:8px;font-size:13px}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2f7bff,#9b6cff);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}
+.content{padding:22px 24px 40px;flex:1}
+.page{display:none}
+.page.on{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ 通用组件 ============ */
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card h3{font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 .sub{margin-left:auto;font-size:11px;color:var(--txt3);font-weight:400}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat .k{color:var(--txt2);font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.stat .v{font-size:28px;font-weight:700;margin:8px 0 4px;font-family:Consolas,Monaco,monospace}
+.stat .t{font-size:11px;color:var(--txt3)}
+.up{color:var(--ok)} .down{color:var(--err)}
+.tag{display:inline-block;padding:1px 10px;border-radius:10px;font-size:11px;line-height:18px}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag.err{background:var(--err-bg);color:var(--err)}
+.tag.pri{background:var(--pri-bg);color:var(--pri2)}
+.tag.gray{background:rgba(100,119,143,.15);color:var(--txt2)}
+.btn{border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;transition:.15s}
+.btn.pri{background:var(--pri);color:#fff}
+.btn.pri:hover{filter:brightness(1.15)}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--txt2)}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt3)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.err{background:var(--err);color:#fff}
+.btn.sm{padding:4px 12px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--txt3);font-weight:500;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid rgba(35,50,71,.5);color:var(--txt2);white-space:nowrap}
+tr:hover td{background:rgba(47,123,255,.04);color:var(--txt)}
+td .mono{font-family:Consolas,monospace;color:var(--txt)}
+.filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.sel{background:var(--bg2);border:1px solid var(--line);color:var(--txt2);border-radius:8px;height:32px;padding:0 10px;font-size:12px;outline:none}
+.pager{display:flex;justify-content:flex-end;gap:6px;margin-top:14px;font-size:12px;color:var(--txt3);align-items:center}
+.pager span{padding:4px 10px;border:1px solid var(--line);border-radius:6px;cursor:pointer}
+.pager span.on{border-color:var(--pri);color:var(--pri2)}
+.bar-wrap{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar-wrap i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--pri),var(--pri2))}
+.kv{display:grid;grid-template-columns:110px 1fr;row-gap:9px;font-size:13px}
+.kv dt{color:var(--txt3)} .kv dd{color:var(--txt)}
+
+/* tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs span{padding:10px 18px;cursor:pointer;color:var(--txt3);font-size:13px;border-bottom:2px solid transparent;transition:.15s}
+.tabs span.on{color:var(--pri2);border-color:var(--pri)}
+.tabpane{display:none}.tabpane.on{display:block}
+
+/* modal */
+#modal-mask{position:fixed;inset:0;background:rgba(5,8,12,.66);z-index:60;display:none;align-items:center;justify-content:center}
+#modal-mask.on{display:flex}
+.modal{width:520px;background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:24px;animation:fadein .2s}
+.modal h3{font-size:15px;margin-bottom:16px}
+.modal textarea{width:100%;height:88px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px;font-size:13px;resize:none;outline:none}
+.modal textarea:focus{border-color:var(--pri)}
+.modal .ops{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.radio-pick{display:flex;gap:10px;margin-bottom:12px}
+.radio-pick label{flex:1;padding:9px;border:1px solid var(--line);border-radius:8px;text-align:center;cursor:pointer;color:var(--txt2);font-size:13px}
+.radio-pick label.on{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.radio-pick label.on.rej{border-color:var(--err);color:var(--err);background:var(--err-bg)}
+
+/* toast */
+#toasts{position:fixed;right:20px;top:70px;z-index:80;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--panel2);border:1px solid var(--line2);border-left:3px solid var(--pri);border-radius:8px;padding:12px 16px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.4);min-width:280px;animation:slidein .3s ease}
+.toast b{display:block;margin-bottom:2px;font-size:13px}
+.toast small{color:var(--txt3)}
+.toast.err{border-left-color:var(--err)} .toast.ok{border-left-color:var(--ok)}
+@keyframes slidein{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* 图表容器 */
+.chart-box{width:100%;overflow:hidden}
+.legend{display:flex;gap:16px;font-size:11px;color:var(--txt3);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* Top3 卡片 */
+.top3{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--panel2);position:relative;cursor:pointer;transition:.15s}
+.top3:hover{border-color:var(--line2);transform:translateY(-1px)}
+.top3 .rank{position:absolute;top:-10px;left:14px;background:var(--pri);color:#fff;font-size:11px;padding:2px 10px;border-radius:10px}
+.top3 .rank.r1{background:#f5a623}.top3 .rank.r2{background:var(--pri)}.top3 .rank.r3{background:var(--purple)}
+.top3 h4{font-size:14px;margin:4px 0 8px}
+.top3 .meta{display:flex;gap:14px;font-size:12px;color:var(--txt3);margin-bottom:10px;flex-wrap:wrap}
+.conf{display:flex;align-items:center;gap:10px;font-size:12px}
+.conf .num{font-family:Consolas,monospace;font-size:16px;font-weight:700}
+.ev-item{border-left:2px solid var(--line2);padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--txt2);background:rgba(35,50,71,.25);border-radius:0 8px 8px 0}
+.ev-item b{color:var(--txt)}
+.ev-item .src{float:right;color:var(--txt3);font-size:11px}
+
+/* 时间线 */
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 18px 10px;font-size:13px}
+.tl-item::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--pri)}
+.tl-item .tm{color:var(--txt3);font-size:11px;font-family:Consolas,monospace}
+.tl-item b{display:block;margin:2px 0}
+
+/* 图谱 */
+.graph-svg text{font-size:11px;fill:var(--txt2)}
+.graph-svg .n{stroke-width:1.5}
+.graph-svg .e{stroke:#33507a;stroke-width:1.2;fill:none}
+.graph-svg .e.hot{stroke:var(--err);stroke-width:2;stroke-dasharray:5 3}
+.svg-line{stroke:var(--line);stroke-width:1}
+.svg-text{fill:var(--txt3);font-size:10px;font-family:Consolas}
+.footer-note{color:var(--txt3);font-size:11px;text-align:center;margin-top:26px}
+@media (max-width:1200px){.grid-4{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr}}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr}aside{display:none}main{margin-left:0}}
+</style>
+</head>
+<body>
+
+<!-- ================= 登录 ================= -->
+<div id="login-mask">
+  <div class="login-card">
+    <div class="login-logo"><div class="cube">⚡</div><h1>IndustryAgent</h1></div>
+    <div class="login-sub">芯联半导体 · 工业智能体平台 v1.0（界面原型）</div>
+    <label>账号</label>
+    <input id="login-user" value="liji" readonly>
+    <label>密码</label>
+    <input type="password" value="********" readonly>
+    <label>登录角色（RBAC）</label>
+    <div class="login-role" id="login-roles">
+      <span class="on">工艺工程师</span><span>设备工程师</span><span>质量工程师</span><span>管理员</span>
+    </div>
+    <button class="btn-login" onclick="doLogin()">登 录</button>
+    <div class="login-foot">单点登录由 Keycloak 提供 · 本原型为纯前端演示，数据均为模拟</div>
+  </div>
+</div>
+
+<!-- ================= 应用 ================= -->
+<div id="app">
+  <aside>
+    <div class="side-logo"><div class="cube">⚡</div><div><b>IndustryAgent</b><small>芯联半导体 12″ 晶圆厂</small></div></div>
+    <nav>
+      <div class="nav-group">监控分析</div>
+      <div class="nav-item on" data-page="dashboard"><span class="ic">📊</span>良率看板</div>
+      <div class="nav-item" data-page="anomalies"><span class="ic">🚨</span>异常事件<span class="badge" id="nav-anomaly-badge">2</span></div>
+      <div class="nav-item" data-page="rootcause"><span class="ic">🔍</span>根因分析</div>
+      <div class="nav-group">处置闭环</div>
+      <div class="nav-item" data-page="approvals"><span class="ic">✅</span>审批工作台<span class="badge" id="nav-appr-badge">3</span></div>
+      <div class="nav-item" data-page="report"><span class="ic">📄</span>8D 报告</div>
+      <div class="nav-group">系统</div>
+      <div class="nav-item" data-page="audit"><span class="ic">🧾</span>审计日志</div>
+      <div class="nav-item" data-page="system"><span class="ic">⚙️</span>系统管理</div>
+    </nav>
+    <div class="side-foot">智能体链路<br>监控→根因→建议→审批→报告<br><span id="agent-status" style="color:var(--ok)">● 全部在线</span></div>
+  </aside>
+
+  <main>
+    <header>
+      <div class="crumb" id="crumb">IndustryAgent / <b>良率看板</b></div>
+      <div class="hd-right">
+        <div class="hd-search">🔍 搜索批次 / 设备 / 事件号…</div>
+        <div class="bell" onclick="toast('实时推送','WebSocket 已连接 · anomaly.push 通道正常')">🔔<span class="dot" id="bell-dot">3</span></div>
+        <div class="hd-user"><div class="avatar">李</div><span>李吉 · 工艺工程师</span></div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ 良率看板 ============ -->
+      <section class="page on" id="page-dashboard">
+        <div class="grid-4" style="margin-bottom:14px">
+          <div class="card stat"><div class="k">当前良率<span class="tag err">低于目标</span></div><div class="v">93.2<span style="font-size:14px">%</span></div><div class="t">目标 95.0% · 周环比 <span class="down">▼1.8%</span></div></div>
+          <div class="card stat"><div class="k">OEE<span class="tag warn">待改善</span></div><div class="v">78.4<span style="font-size:14px">%</span></div><div class="t">目标 85.0% · 周环比 <span class="up">▲0.6%</span></div></div>
+          <div class="card stat"><div class="k">今日异常事件</div><div class="v">12</div><div class="t">严重 1 · 高 3 · 中 8 · <span class="down">误报 1</span></div></div>
+          <div class="card stat"><div class="k">待审批建议</div><div class="v">3</div><div class="t">最久等待 2h14m · 超 24h 自动升级主管</div></div>
+        </div>
+        <div class="grid-2" style="margin-bottom:14px">
+          <div class="card">
+            <h3>近 14 天良率趋势 <span class="sub">B-2026-10xx 批次 · 日粒度</span></h3>
+            <div class="chart-box" id="chart-yield"></div>
+          </div>
+          <div class="card">
+            <h3>缺陷分类占比 <span class="sub">近 7 天 · WAT/CP 汇总</span></h3>
+            <div class="chart-box" id="chart-defect"></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>异常设备 Top 5 <span class="sub">FDC 触发次数 · 近 30 天</span></h3>
+            <div class="chart-box" id="chart-equip"></div>
+          </div>
+          <div class="card">
+            <h3>智能体运行概览 <span class="sub">今日 00:00 ~ 17:20</span></h3>
+            <table>
+              <tr><td>监控 Agent（FDC/SPC）</td><td class="mono">1,247 次检测</td><td><span class="tag ok">正常</span></td><td class="mono">P95 120ms</td></tr>
+              <tr><td>根因 Agent（Top-3）</td><td class="mono">12 次分析</td><td><span class="tag ok">正常</span></td><td class="mono">均值 3m42s</td></tr>
+              <tr><td>建议 Agent</td><td class="mono">9 条建议</td><td><span class="tag ok">正常</span></td><td class="mono">P95 21s</td></tr>
+              <tr><td>报告 Agent（8D）</td><td class="mono">4 份报告</td><td><span class="tag warn">1 份待人工补审</span></td><td class="mono">P95 55s</td></tr>
+              <tr><td>人工接管率</td><td class="mono">26%</td><td><span class="tag ok">达标(&lt;30%)</span></td><td class="mono">—</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 异常事件 ============ -->
+      <section class="page" id="page-anomalies">
+        <div class="filter">
+          <select class="sel"><option>全部产线</option><option>FAB-A1</option><option>FAB-A2</option><option>FAB-A3</option></select>
+          <select class="sel"><option>全部状态</option><option>待确认</option><option>分析中</option><option>待审批</option><option>已审批</option><option>已关闭</option></select>
+          <select class="sel"><option>全部等级</option><option>严重</option><option>高</option><option>中</option></select>
+          <input class="sel" style="width:180px" placeholder="事件号 / 批次 / 设备">
+          <button class="btn pri sm">查询</button>
+          <button class="btn ghost sm">重置</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--txt3)">🔔 WebSocket 实时推送已开启（anomaly.push）</span>
+        </div>
+        <div class="card" style="padding:6px 14px">
+          <table id="tbl-anomaly">
+            <thead><tr><th>事件号</th><th>批次</th><th>设备</th><th>异常描述</th><th>等级</th><th>状态</th><th>触发时间</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="pager"><span>‹</span><span class="on">1</span><span>2</span><span>3</span><span>›</span>&nbsp;共 37 条</div>
+        </div>
+      </section>
+
+      <!-- ============ 根因分析 ============ -->
+      <section class="page" id="page-rootcause">
+        <div class="card" style="margin-bottom:14px">
+          <h3>事件概况 <span class="sub">任务号 AGT-20261015-0031 · LangGraph 状态机执行完成</span></h3>
+          <div class="row" style="gap:34px">
+            <dl class="kv" style="flex:1">
+              <dt>事件号</dt><dd class="mono">EVT-20261015-007</dd>
+              <dt>批次 / 数量</dt><dd>B-2026-1024 · 342 片</dd>
+              <dt>产品 / 工序</dt><dd>MCU-HC32F4 · ETCH 刻蚀</dd>
+              <dt>异常现象</dt><dd>批次良率 91.3%，较基线下降 2.1%</dd>
+            </dl>
+            <dl class="kv" style="flex:1">
+              <dt>根因 Agent</dt><dd><span class="tag ok">分析完成</span> 耗时 3m42s · 工具调用 17 次</dd>
+              <dt>Top-3 命中</dt><dd><b style="color:var(--warn)">嫌疑 #1 置信度 87%</b></dd>
+              <dt>建议状态</dt><dd><span class="tag warn">待人工审批</span>（HITL）</dd>
+              <dt>分析结论</dt><dd>温度传感器漂移 → 工艺窗口偏移 → 过刻蚀</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns:1.2fr 1fr;align-items:start">
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <h3>Top-3 根因嫌疑 <span class="sub">置信度 = 图谱 × 因果 × 检索 三路证据加权</span></h3>
+              <div class="top3" onclick="go('rootcause')">
+                <span class="rank r1">嫌疑 #1 · 置信度 87%</span>
+                <h4>ETCH-03 腔体温度传感器漂移（+1.8°C 阶跃）</h4>
+                <div class="meta"><span>设备：ETCH-03（FAB-A2）</span><span>工序：ETCH-12 干法刻蚀</span><span>参数：TC_AVG</span><span>风险：影响 342 片</span></div>
+                <div class="conf"><div class="bar-wrap" style="flex:1"><i style="width:87%"></i></div><span class="num" style="color:var(--warn)">0.87</span></div>
+              </div>
+              <div class="top3">
+                <span class="rank r2">嫌疑 #2 · 置信度 64%</span>
+                <h4>PHOTO-12 显影液浓度缓慢漂移（TMAH -3.2%）</h4>
+                <div class="meta"><span>设备：PHOTO-12（FAB-A1）</span><span>工序：PHOTO-08 显影</span><span>参数：DEV_CONC</span><span>风险：影响 96 片</span></div>
+                <div class="conf"><div class="bar-wrap" style="flex:1"><i style="width:64%"></i></div><span class="num">0.64</span></div>
+              </div>
+              <div class="top3">
+                <span class="rank r3">嫌疑 #3 · 置信度 41%</span>
+                <h4>IMP-05 离子注入剂量偏差（±1.5%）</h4>
+                <div class="meta"><span>设备：IMP-05（FAB-A3）</span><span>工序：IMP-03 注入</span><span>参数：DOSE_AVG</span><span>风险：影响 0 片（时序不重叠）</span></div>
+                <div class="conf"><div class="bar-wrap" style="flex:1"><i style="width:41%"></i></div><span class="num">0.41</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>建议 Agent 输出 <span class="sub">生成于 10-15 09:58 · 已进入人工审批</span></h3>
+              <dl class="kv">
+                <dt>建议动作</dt><dd>将 ETCH-03 腔体温度设定值由 <b class="mono">85.0°C</b> 校准至 <b class="mono">84.2°C</b>，并更换 TC-02 温度传感器</dd>
+                <dt>风险等级</dt><dd><span class="tag warn">中</span> 需短暂停机 25 分钟 · 影响当班产出约 60 片</dd>
+                <dt>预计收益</dt><dd>批次良率回升至 93.5%±0.4%，挽回约 ¥41 万</dd>
+                <dt>依据</dt><dd>嫌疑 #1 证据链 E-01~E-05 · 因果效应 -1.8%/°C</dd>
+              </dl>
+              <div style="margin-top:16px;display:flex;gap:10px">
+                <button class="btn pri" onclick="openApprove('SUG-20261015-011','通过')">进入审批</button>
+                <button class="btn ghost" onclick="go('rootcause')">查看完整证据链 ↓</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>证据链 <span class="sub">每条结论均引用工具返回，防幻觉约束</span></h3>
+            <div class="tabs" id="ev-tabs">
+              <span class="on" data-t="0">时序对比</span><span data-t="1">知识图谱</span><span data-t="2">相似案例</span><span data-t="3">因果分析</span>
+            </div>
+            <div class="tabpane on" id="evp-0">
+              <div class="chart-box" id="chart-ts"></div>
+              <div class="ev-item" style="margin-top:12px"><span class="src">E-01 · query_sensors</span><b>TC_AVG 阶跃 +1.8°C</b><br>10-13 22:40 起 ETCH-03 TC_AVG 由 84.9°C 阶跃至 86.7°C，同腔体 TC-01/TC-03 读数正常 → 判定单传感器漂移而非真实温升。</div>
+            </div>
+            <div class="tabpane" id="evp-1">
+              <svg class="graph-svg" id="svg-graph" width="100%" height="330" viewBox="0 0 460 330"></svg>
+              <div class="ev-item"><span class="src">E-02 · query_graph</span><b>图谱关联路径命中</b><br>ETCH-03 → 参数 TC_AVG → 历史缺陷「过刻蚀」→ 良率下降，2 跳路径权重 0.91，为全图谱最高。</div>
+            </div>
+            <div class="tabpane" id="evp-2">
+              <div class="ev-item"><span class="src">E-03 · search_docs · 相似度 0.87</span><b>2025-11-03 ETCH-03 同类漂移事件</b><br>同位置传感器漂移 +1.6°C，校准后良率 3 天恢复。8D 报告编号 R8D-2025-1103-02。</div>
+              <div class="ev-item"><span class="src">E-04 · search_docs · 相似度 0.71</span><b>2026-03-21 ETCH-01 腔体温度漂移</b><br>不同设备同类模式，处置方案可参考（换传感器 + 设定值补偿）。</div>
+              <div class="ev-item"><span class="src">E-05 · search_docs · 相似度 0.58</span><b>《干法刻蚀工艺规范》§4.2 温度窗口</b><br>规范要求腔温控制 ±0.5°C，当前偏移 +1.8°C 已越限 3.6σ。</div>
+            </div>
+            <div class="tabpane" id="evp-3">
+              <dl class="kv" style="margin-bottom:12px">
+                <dt>方法</dt><dd>DoWhy 后门调整 · 控制变量：压强/气流/RF功率</dd>
+                <dt>因果效应</dt><dd><b class="mono" style="color:var(--err)">-1.8% 良率 / °C</b>（95% CI：-2.3 ~ -1.3）</dd>
+                <dt>显著性</dt><dd>p &lt; 0.01 · 反事实检验通过</dd>
+                <dt>结论</dt><dd>温度漂移可解释本次良率下降的 82%（R²=0.82）</dd>
+              </dl>
+              <div class="chart-box" id="chart-causal"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 审批工作台 ============ -->
+      <section class="page" id="page-approvals">
+        <div class="grid-2" style="grid-template-columns:1.4fr 1fr;align-items:start">
+          <div class="card" style="padding:6px 14px">
+            <div class="filter" style="margin:12px 0">
+              <select class="sel"><option>待我审批</option><option>已审批</option><option>全部</option></select>
+              <span style="font-size:12px;color:var(--txt3)">关键建议必须人工审批（人机协同 HITL）</span>
+            </div>
+            <table id="tbl-appr">
+              <thead><tr><th>建议号</th><th>事件</th><th>建议摘要</th><th>风险</th><th>提交时间</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h3>审批历史 <span class="sub">SUG-20261015-011</span></h3>
+            <div class="timeline">
+              <div class="tl-item"><span class="tm">10-15 09:58</span><b>建议 Agent 生成建议</b>温度校准 85.0→84.2°C，风险中，引用 E-01~E-05</div>
+              <div class="tl-item"><span class="tm">10-15 09:58</span><b>进入人工审批（interrupt）</b>LangGraph 图中断，等待工艺工程师确认 · 超时 24h 升级生产主管</div>
+              <div class="tl-item"><span class="tm">10-15 10:12</span><b>张伟（工艺主管）加签会签</b>补充意见：同意校准，建议同步排查 TC-02 备件库存</div>
+              <div class="tl-item"><span class="tm">—</span><b style="color:var(--txt3)">等待 李吉 审批…</b><span class="tag warn">待审批</span></div>
+            </div>
+            <h3 style="margin-top:20px">近 30 天审批统计</h3>
+            <table>
+              <tr><td>审批通过</td><td class="mono">41</td><td><span class="tag ok">采纳率 82%</span></td></tr>
+              <tr><td>审批驳回</td><td class="mono">9</td><td>主要理由：影响范围过大 / 证据不足</td></tr>
+              <tr><td>平均审批时长</td><td class="mono">18 min</td><td>目标 &lt; 30 min</td></tr>
+              <tr><td>超时自动升级</td><td class="mono">2</td><td>均已处置</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 8D 报告 ============ -->
+      <section class="page" id="page-report">
+        <div class="card">
+          <h3>8D 报告 · R8D-20261015-01
+            <span class="sub">报告 Agent 自动生成 · 关联事件 EVT-20261015-007 · 待质量工程师复核签发</span>
+            <span style="margin-left:auto"><button class="btn ghost sm" onclick="toast('导出报告','已生成 R8D-20261015-01.pdf（模拟）','ok')">导出 PDF</button></span>
+          </h3>
+          <table>
+            <tr><th style="width:64px">D1</th><td><b>成立小组</b></td><td>组长：李吉（工艺）｜成员：王强（设备）、赵敏（质量）、刘洋（生产）</td></tr>
+            <tr><th>D2</th><td><b>问题描述</b></td><td>B-2026-1024 批次良率 91.3%，低于基线 2.1%；缺陷集中于过刻蚀图形（占比 63%）</td></tr>
+            <tr><th>D3</th><td><b>临时围堵</b></td><td>10-15 10:30 起 ETCH-03 暂停投片；在制品 342 片全数 WAT 复测，拦截缺陷片 29 片</td></tr>
+            <tr><th>D4</th><td><b>根本原因</b></td><td>TC-02 温度传感器老化漂移 +1.8°C（嫌疑 #1，置信度 87%；因果效应 -1.8%/°C，p&lt;0.01）</td></tr>
+            <tr><th>D5</th><td><b>永久措施</b></td><td>更换 TC-02 传感器；设定值补偿至 84.2°C；增加同型号传感器 90 天预防性更换计划</td></tr>
+            <tr><th>D6</th><td><b>措施验证</b></td><td>10-16 起连续 3 批良率回升至 93.4% / 93.6% / 93.5%（验证中）</td></tr>
+            <tr><th>D7</th><td><b>预防再发</b></td><td>FDC 新增 TC 传感器一致性规则（双传感器差值 &gt;0.5°C 告警）；纳入《刻蚀设备点检规范》v3.2</td></tr>
+            <tr><th>D8</th><td><b>团队表彰</b></td><td>待关闭后由质量部提报</td></tr>
+          </table>
+          <div class="footer-note">本报告由报告 Agent 生成于 10-15 11:20，全部结论引用证据链 E-01 ~ E-05 与审批记录 APR-20261015-019</div>
+        </div>
+      </section>
+
+      <!-- ============ 审计日志 ============ -->
+      <section class="page" id="page-audit">
+        <div class="filter">
+          <select class="sel"><option>全部操作类型</option><option>登录</option><option>查询</option><option>审批</option><option>配置变更</option></select>
+          <input class="sel" style="width:180px" placeholder="操作人 / IP">
+          <input class="sel" style="width:150px" placeholder="开始日期">
+          <input class="sel" style="width:150px" placeholder="结束日期">
+          <button class="btn pri sm">查询</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--txt3)">审计日志保留 ≥ 1 年 · 不可篡改（append-only）</span>
+        </div>
+        <div class="card" style="padding:6px 14px">
+          <table>
+            <thead><tr><th>时间</th><th>操作人</th><th>角色</th><th>操作</th><th>对象</th><th>来源 IP</th><th>结果</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">10-15 17:12:03</td><td>李吉</td><td>工艺工程师</td><td>查询</td><td class="mono">GET /api/v1/anomalies?status=WAIT_APPROVAL</td><td class="mono">10.20.8.31</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 16:58:41</td><td>张伟</td><td>工艺主管</td><td>加签会签</td><td class="mono">SUG-20261015-011</td><td class="mono">10.20.8.14</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 15:40:19</td><td>agent:rootcause</td><td>智能体</td><td>根因分析</td><td class="mono">AGT-20261015-0031</td><td class="mono">127.0.0.1</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 14:22:07</td><td>admin</td><td>管理员</td><td>配置变更</td><td class="mono">OPA 策略 policy-v14.rego 上线</td><td class="mono">10.20.1.5</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 11:20:55</td><td>agent:report</td><td>智能体</td><td>生成报告</td><td class="mono">R8D-20261015-01</td><td class="mono">127.0.0.1</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 10:31:12</td><td>刘洋</td><td>生产主管</td><td>确认围堵</td><td class="mono">EVT-20261015-007 · 停线确认</td><td class="mono">10.20.9.8</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 09:05:44</td><td>赵敏</td><td>质量工程师</td><td>登录</td><td class="mono">Keycloak SSO</td><td class="mono">10.20.7.2</td><td><span class="tag ok">200</span></td></tr>
+              <tr><td class="mono">10-15 08:59:02</td><td>unknown</td><td>—</td><td>登录失败</td><td class="mono">Keycloak SSO · 密码错误 ×3</td><td class="mono">172.16.4.77</td><td><span class="tag err">401</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>‹</span><span class="on">1</span><span>2</span><span>…</span><span>89</span><span>›</span>&nbsp;共 1,772 条</div>
+        </div>
+      </section>
+
+      <!-- ============ 系统管理 ============ -->
+      <section class="page" id="page-system">
+        <div class="grid-2" style="margin-bottom:14px;align-items:start">
+          <div class="card">
+            <h3>用户与角色（RBAC · Keycloak 同步）<span class="sub"><button class="btn pri sm" onclick="toast('新建用户','演示环境：已打开新建用户抽屉（模拟）')">+ 新建用户</button></span></h3>
+            <table>
+              <thead><tr><th>用户</th><th>角色</th><th>数据权限</th><th>最近登录</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td>李吉（工艺工程师）</td><td>process_eng</td><td>FAB-A1/A2</td><td class="mono">10-15 17:02</td><td><span class="tag ok">在线</span></td></tr>
+                <tr><td>王强（设备工程师）</td><td>equip_eng</td><td>全部产线</td><td class="mono">10-15 16:20</td><td><span class="tag ok">在线</span></td></tr>
+                <tr><td>张伟（工艺主管）</td><td>process_lead</td><td>全部产线</td><td class="mono">10-15 16:58</td><td><span class="tag gray">离线</span></td></tr>
+                <tr><td>赵敏（质量工程师）</td><td>quality_eng</td><td>全部产线</td><td class="mono">10-15 09:05</td><td><span class="tag gray">离线</span></td></tr>
+                <tr><td>刘洋（生产主管）</td><td>prod_lead</td><td>FAB-A1/A3</td><td class="mono">10-15 10:31</td><td><span class="tag gray">离线</span></td></tr>
+                <tr><td>admin（系统管理员）</td><td>admin</td><td>全部</td><td class="mono">10-15 14:22</td><td><span class="tag gray">离线</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <h3>数据健康度</h3>
+              <table>
+                <tr><td>传感器在线率</td><td class="mono">98.7%</td><td><span class="tag ok">正常</span></td></tr>
+                <tr><td>数据延迟 P95</td><td class="mono">2.3 s</td><td><span class="tag ok">正常</span></td></tr>
+                <tr><td>Kafka 消费 Lag</td><td class="mono">156</td><td><span class="tag ok">&lt;1000 告警线</span></td></tr>
+                <tr><td>断流设备</td><td class="mono">0</td><td><span class="tag ok">正常</span></td></tr>
+                <tr><td>脏数据占比（近24h）</td><td class="mono">1.9%</td><td><span class="tag warn">注入样本</span></td></tr>
+                <tr><td>TimescaleDB 压缩率</td><td class="mono">8.4×</td><td><span class="tag ok">达标</span></td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <h3>智能体评估指标（近 30 天）</h3>
+              <table>
+                <tr><td>根因 Top-3 准确率</td><td class="mono"><b>82.0%</b></td><td><span class="tag ok">达标 &gt;80%</span></td></tr>
+                <tr><td>MTTR（根因定位）</td><td class="mono"><b>3.6 h</b></td><td><span class="tag ok">↓55%（原 8h）</span></td></tr>
+                <tr><td>误报率</td><td class="mono"><b>8.2%</b></td><td><span class="tag ok">达标 &lt;10%</span></td></tr>
+                <tr><td>人工接管率</td><td class="mono"><b>26%</b></td><td><span class="tag ok">达标 &lt;30%</span></td></tr>
+                <tr><td>端到端延迟（均值）</td><td class="mono"><b>4m18s</b></td><td><span class="tag warn">接近 5min 上限</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>智能体拓扑 <span class="sub">LangGraph 状态机 · 全链路 trace 覆盖（OpenTelemetry）</span></h3>
+          <div style="font-family:Consolas,monospace;font-size:12.5px;color:var(--txt2);line-height:2;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:16px 20px;overflow-x:auto">
+            <span style="color:var(--teal)">[监控 Agent]</span> FDC/SPC 异常检测 ──▶ <span style="color:var(--pri2)">[根因 Agent]</span> 图谱×因果×RAG → Top-3 嫌疑 ──▶ <span style="color:var(--purple)">[建议 Agent]</span> 调参/停线建议<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;▼ interrupt（HITL）<br>
+            <span style="color:var(--warn)">[审批 Agent]</span> 人工确认 / 超时24h升级 ──▶ <span style="color:var(--ok)">[报告 Agent]</span> 8D 报告 ──▶ <span style="color:var(--txt3)">[评估 Agent]</span> 指标回归（离线）
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- 审批弹窗 -->
+<div id="modal-mask">
+  <div class="modal">
+    <h3>审批决定 · <span class="mono" id="md-sugid">SUG-20261015-011</span></h3>
+    <div class="kv" style="margin-bottom:14px">
+      <dt>建议摘要</dt><dd id="md-desc">ETCH-03 温度设定值 85.0→84.2°C，更换 TC-02 传感器</dd>
+      <dt>风险等级</dt><dd><span class="tag warn">中</span> 停机 25 分钟 · 影响当班产出 60 片</dd>
+      <dt>关联证据</dt><dd class="mono" style="font-size:12px">E-01 ~ E-05 · 嫌疑#1 置信度 87%</dd>
+    </div>
+    <div class="radio-pick" id="md-pick">
+      <label class="on" data-v="pass">✓ 通过（含加签意见）</label>
+      <label class="rej" data-v="reject">✗ 驳回</label>
+    </div>
+    <textarea id="md-reason" placeholder="审批理由（必填，将写入审计日志；驳回时请说明证据缺口或影响范围问题）"></textarea>
+    <div class="ops">
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn pri" onclick="submitApproval()">提交决定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ============ 工具 ============ */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function toast(t,msg,type=''){const d=document.createElement('div');d.className='toast '+type;
+  d.innerHTML=`<b>${t}</b><small>${msg}</small>`;$('#toasts').appendChild(d);
+  setTimeout(()=>{d.style.opacity=0;d.style.transition='.4s';setTimeout(()=>d.remove(),400)},4200);}
+
+/* ============ 登录 ============ */
+$('#login-roles').addEventListener('click',e=>{if(e.target.tagName==='SPAN'){
+  $$('#login-roles span').forEach(s=>s.classList.remove('on'));e.target.classList.add('on');}});
+function doLogin(){$('#login-mask').style.display='none';$('#app').classList.add('on');
+  toast('登录成功','Keycloak SSO 鉴权通过 · 角色：'+$('#login-roles .on').textContent,'ok');
+  setTimeout(()=>toast('WebSocket 已连接','anomaly.push / task.status 通道订阅成功'),1200);}
+
+/* ============ 导航 ============ */
+const crumbMap={dashboard:'良率看板',anomalies:'异常事件',rootcause:'根因分析',approvals:'审批工作台',report:'8D 报告',audit:'审计日志',system:'系统管理'};
+$$('.nav-item').forEach(n=>n.addEventListener('click',()=>go(n.dataset.page)));
+function go(p){$$('.nav-item').forEach(n=>n.classList.toggle('on',n.dataset.page===p));
+  $$('.page').forEach(s=>s.classList.toggle('on',s.id==='page-'+p));
+  $('#crumb').innerHTML='IndustryAgent / <b>'+crumbMap[p]+'</b>';}
+
+/* ============ 异常事件表 ============ */
+const anomalies=[
+ ['EVT-20261015-007','B-2026-1024','ETCH-03','腔体温度 SPC 越界（+1.8°C）','err','严重','待审批','10-15 09:42'],
+ ['EVT-20261015-006','B-2026-1019','PHOTO-12','显影液浓度缓慢漂移','warn','高','分析中','10-15 08:55'],
+ ['EVT-20261015-005','B-2026-1017','IMP-05','注入剂量偏差 ±1.5%','warn','中','待确认','10-15 08:12'],
+ ['EVT-20261014-012','B-2026-1008','CVD-02','腔压波动（瞬态）','ok','中','已关闭','10-14 22:31'],
+ ['EVT-20261014-011','B-2026-1005','CMP-01','研磨速率异常 ↑6%','warn','高','已审批','10-14 19:47'],
+ ['EVT-20261014-010','B-2026-1002','LITH-07','对准精度漂移','ok','中','已关闭','10-14 16:20'],
+ ['EVT-20261013-009','B-2026-0991','FURN-02','炉管温度均匀性越限','err','严重','已关闭','10-13 11:05'],
+ ['EVT-20261013-008','B-2026-0987','ETCH-01','终点检测信号噪声','ok','中','误报','10-13 09:33'],
+];
+const lvTag={'严重':'err','高':'warn','中':'pri'};
+const stTag={'待审批':'warn','分析中':'pri','待确认':'gray','已关闭':'gray','已审批':'ok','误报':'err'};
+$('#tbl-anomaly tbody').innerHTML=anomalies.map(a=>
+ `<tr><td class="mono">${a[0]}</td><td class="mono">${a[1]}</td><td class="mono">${a[2]}</td><td>${a[3]}</td>
+  <td><span class="tag ${lvTag[a[5]]}">${a[5]}</span></td><td><span class="tag ${stTag[a[6]]}">${a[6]}</span></td>
+  <td class="mono">${a[7]}</td><td>${a[6]==='待审批'||a[6]==='分析中'||a[6]==='待确认'?`<button class="btn pri sm" onclick="go('rootcause')">详情 / 证据链</button>`:'<button class="btn ghost sm" onclick="go(\'rootcause\')">查看</button>'}</td></tr>`).join('');
+
+/* ============ 审批表 ============ */
+const approvals=[
+ ['SUG-20261015-011','EVT-…-007','ETCH-03 温度校准 85.0→84.2°C，更换 TC-02','warn','中','10-15 09:58','待审批'],
+ ['SUG-20261015-010','EVT-…-006','PHOTO-12 显影液补浓 +2.4%，循环 30min','warn','低','10-15 10:26','待审批'],
+ ['SUG-20261015-009','EVT-…-005','IMP-05 剂量复测，暂不调参（证据不足）','ok','低','10-15 11:02','待审批'],
+ ['SUG-20261014-008','EVT-…014-011','CMP-01 研磨压力 -3%，下周保养提前','ok','中','10-14 20:15','已通过'],
+ ['SUG-20261013-007','EVT-…013-009','FURN-02 停线检修 4h，更换热电偶','err','高','10-13 11:40','已通过'],
+];
+function renderApprovals(){
+ $('#tbl-appr tbody').innerHTML=approvals.map(a=>{
+  const st=a[6]==='待审批'?`<span class="tag warn">待审批</span>`:(a[6]==='已通过'?`<span class="tag ok">已通过</span>`:`<span class="tag gray">${a[6]}</span>`);
+  const op=a[6]==='待审批'?`<button class="btn pri sm" onclick="openApprove('${a[0]}','审批')">审批</button>`:'<span style="color:var(--txt3);font-size:12px">—</span>';
+  return `<tr><td class="mono">${a[0]}</td><td class="mono">${a[1]}</td><td style="white-space:normal;min-width:220px">${a[2]}</td>
+   <td><span class="tag ${a[3]}">${a[4]}</span></td><td class="mono">${a[5]}</td><td>${st}</td><td>${op}</td></tr>`;}).join('');}
+renderApprovals();
+
+/* ============ 审批弹窗 ============ */
+let mdDecision='pass';
+$('#md-pick').addEventListener('click',e=>{if(e.target.tagName==='LABEL'){
+  $$('#md-pick label').forEach(l=>l.classList.remove('on'));e.target.classList.add('on');mdDecision=e.target.dataset.v;}});
+function openApprove(sugId){$('#md-sugid').textContent=sugId;$('#md-reason').value='';$('#modal-mask').classList.add('on');}
+function closeModal(){$('#modal-mask').classList.remove('on');}
+function submitApproval(){
+  const r=$('#md-reason').value.trim();
+  if(!r){toast('理由必填','审批理由将写入审计日志，请填写后提交','err');return;}
+  const sug=$('#md-sugid').textContent;
+  const row=approvals.find(a=>a[0]===sug); if(row&&row[6]==='待审批')row[6]=mdDecision==='pass'?'已通过':'已驳回';
+  renderApprovals();
+  closeModal();
+  if(mdDecision==='pass'){
+    toast('审批通过','已写入审计日志 · LangGraph 图恢复执行 → 报告 Agent 生成 8D','ok');
+    setTimeout(()=>toast('任务状态更新','AGT-20261015-0031：审批通过 → 8D 报告生成中…'),1500);
+    setTimeout(()=>{go('report');toast('8D 报告已生成','R8D-20261015-01 已推送至质量工程师待复核','ok');},3200);
+  }else{
+    toast('审批驳回','已写入审计日志 · 建议回流根因 Agent 复核证据','err');
+  }
+  const b=$('#nav-appr-badge');const n=Math.max(0,parseInt(b.textContent)-1);b.textContent=n;b.style.display=n?'':'none';
+}
+
+/* ============ 证据链 tabs ============ */
+$('#ev-tabs').addEventListener('click',e=>{if(e.target.tagName==='SPAN'){
+  $$('#ev-tabs span').forEach(s=>s.classList.remove('on'));e.target.classList.add('on');
+  $$('.tabpane').forEach((p,i)=>p.classList.toggle('on',i==e.target.dataset.t));}});
+
+/* ============ SVG 图表 ============ */
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function axis(w,h,pad){const g=el('g',{});
+  g.appendChild(el('line',{x1:pad.l,y1:h-pad.b,x2:w-pad.r,y2:h-pad.b,class:'svg-line'}));
+  g.appendChild(el('line',{x1:pad.l,y1:pad.t,x2:pad.l,y2:h-pad.b,class:'svg-line'}));return g;}
+
+function lineChart(id,series,labels,opt={}){
+  const box=$('#'+id);if(!box)return;box.innerHTML='';
+  const w=box.clientWidth||520,h=opt.h||240,pad={l:42,r:14,t:16,b:26};
+  const svg=el('svg',{width:'100%',viewBox:`0 0 ${w} ${h}`});box.appendChild(svg);
+  const all=series.flatMap(s=>s.data);let mn=Math.min(...all),mx=Math.max(...all);
+  if(opt.target!=null){mn=Math.min(mn,opt.target);mx=Math.max(mx,opt.target);}
+  const span=(mx-mn)||1;mn-=span*.15;mx+=span*.08;
+  const X=i=>pad.l+(w-pad.l-pad.r)*i/(labels.length-1);
+  const Y=v=>h-pad.b-(h-pad.t-pad.b)*(v-mn)/(mx-mn);
+  svg.appendChild(axis(w,h,pad));
+  // grid + y labels
+  for(let i=0;i<=4;i++){const v=mn+(mx-mn)*i/4,y=Y(v);
+    svg.appendChild(el('line',{x1:pad.l,y1:y,x2:w-pad.r,y2:y,class:'svg-line','stroke-opacity':.4}));
+    const t=el('text',{x:pad.l-6,y:y+3,'text-anchor':'end',class:'svg-text'});t.textContent=v.toFixed(1);svg.appendChild(t);}
+  // x labels (every 2)
+  labels.forEach((L,i)=>{if(i%2===0||labels.length<=8){const t=el('text',{x:X(i),y:h-8,'text-anchor':'middle',class:'svg-text'});t.textContent=L;svg.appendChild(t);}});
+  // target line
+  if(opt.target!=null){svg.appendChild(el('line',{x1:pad.l,y1:Y(opt.target),x2:w-pad.r,y2:Y(opt.target),stroke:'#2fbf71','stroke-dasharray':'6 4','stroke-width':1.2}));
+    const t=el('text',{x:w-pad.r,y:Y(opt.target)-4,'text-anchor':'end',class:'svg-text',fill:'#2fbf71'});t.textContent='目标 '+opt.target;svg.appendChild(t);}
+  // series
+  series.forEach(s=>{
+    const d=s.data.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    svg.appendChild(el('path',{d,fill:'none',stroke:s.color,'stroke-width':2.2,'stroke-linejoin':'round','stroke-linecap':'round'}));
+    if(s.area){const dd=d+` L ${X(s.data.length-1)} ${h-pad.b} L ${X(0)} ${h-pad.b} Z`;
+      svg.appendChild(el('path',{d:dd,fill:s.color,opacity:.08}));}
+    s.data.forEach((v,i)=>{if(i===s.data.length-1||s.mark===i){
+      svg.appendChild(el('circle',{cx:X(i),cy:Y(v),r:3.4,fill:s.color}));
+      if(s.mark===i&&s.markLabel){const t=el('text',{x:X(i),y:Y(v)-10,'text-anchor':'middle',class:'svg-text',fill:s.color,'font-size':'11'});t.textContent=s.markLabel;svg.appendChild(t);}}});
+  });
+  // legend
+  if(opt.legend){const lg=document.createElement('div');lg.className='legend';lg.style.marginTop='6px';
+    lg.innerHTML=series.map(s=>`<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');box.appendChild(lg);}
+}
+
+function donutChart(id,data){
+  const box=$('#'+id);if(!box)return;box.innerHTML='';
+  const w=box.clientWidth||520,h=250,cx=w/2-60,cy=h/2,r=78,sw=26;
+  const svg=el('svg',{width:'100%',viewBox:`0 0 ${w} ${h}`});box.appendChild(svg);
+  const total=data.reduce((a,b)=>a+b[1],0);let acc=-90;
+  data.forEach(d=>{
+    const ang=d[1]/total*360, a0=acc*Math.PI/180, a1=(acc+ang)*Math.PI/180;acc+=ang;
+    const large=ang>180?1:0;
+    const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    svg.appendChild(el('path',{d:`M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`,fill:'none',stroke:d[2],'stroke-width':sw}));
+    // 百分比标签
+    const mid=(a0+a1)/2,tx=cx+(r+22)*Math.cos(mid),ty=cy+(r+22)*Math.sin(mid);
+    const t=el('text',{x:tx,y:ty+4,'text-anchor':'middle',class:'svg-text'});t.textContent=(d[1]/total*100).toFixed(0)+'%';svg.appendChild(t);
+  });
+  const ct=el('text',{x:cx,y:cy-4,'text-anchor':'middle',fill:'#e6edf5','font-size':'20','font-family':'Consolas','font-weight':'700'});ct.textContent='342';svg.appendChild(ct);
+  const ct2=el('text',{x:cx,y:cy+16,'text-anchor':'middle',class:'svg-text'});ct2.textContent='近7天缺陷片';svg.appendChild(ct2);
+  const lg=document.createElement('div');lg.className='legend';lg.style.cssText='position:absolute;margin-top:-150px;margin-left:'+(cx+r+50)+'px';
+  lg.innerHTML=data.map(d=>`<div style="margin-bottom:8px"><i style="background:${d[2]}"></i>${d[0]} <b style="color:var(--txt);font-family:Consolas">${d[1]}</b></div>`).join('');
+  box.style.position='relative';box.appendChild(lg);
+}
+
+function barChart(id,data){
+  const box=$('#'+id);if(!box)return;box.innerHTML='';
+  const w=box.clientWidth||520,h=240,pad={l:36,r:10,t:14,b:26};
+  const svg=el('svg',{width:'100%',viewBox:`0 0 ${w} ${h}`});box.appendChild(svg);
+  const mx=Math.max(...data.map(d=>d[1]))*1.15;
+  const bw=Math.min(46,(w-pad.l-pad.r)/data.length*.55);
+  const X=i=>pad.l+(w-pad.l-pad.r)*(i+.5)/data.length;
+  svg.appendChild(axis(w,h,pad));
+  for(let i=0;i<=3;i++){const v=mx*i/3,y=h-pad.b-(h-pad.t-pad.b)*i/3;
+    svg.appendChild(el('line',{x1:pad.l,y1:y,x2:w-pad.r,y2:y,class:'svg-line','stroke-opacity':.4}));
+    const t=el('text',{x:pad.l-5,y:y+3,'text-anchor':'end',class:'svg-text'});t.textContent=Math.round(v);svg.appendChild(t);}
+  data.forEach((d,i)=>{const bh=(h-pad.t-pad.b)*d[1]/mx,x=X(i)-bw/2,y=h-pad.b-bh;
+    svg.appendChild(el('rect',{x,y,width:bw,height:bh,rx:4,fill:d[2]||(i===0?'#f0564f':'#2f7bff'),opacity:i===0?1:.75}));
+    const t=el('text',{x:X(i),y:h-8,'text-anchor':'middle',class:'svg-text'});t.textContent=d[0];svg.appendChild(t);
+    const t2=el('text',{x:X(i),y:y-6,'text-anchor':'middle',class:'svg-text',fill:'#e6edf5'});t2.textContent=d[1];svg.appendChild(t2);});
+}
+
+function renderCharts(){
+  // 良率趋势
+  lineChart('chart-yield',
+    [{name:'批次良率',color:'#2f7bff',data:[94.1,94.3,94.0,94.2,93.8,93.9,94.0,93.6,93.4,93.1,92.8,92.5,91.9,91.3],area:true,mark:13,markLabel:'91.3% ▼'},
+     {name:'基线',color:'#64778f',data:[94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0,94.0]}],
+    Array.from({length:14},(_,i)=>'10-'+String(i+2).padStart(2,'0')),
+    {target:95,legend:true,h:250});
+  // 缺陷分类
+  donutChart('chart-defect',[['过刻蚀',63,'#f0564f'],['显影不良',41,'#f5a623'],['颗粒污染',37,'#2f7bff'],['注入缺陷',18,'#9b6cff'],['其他',12,'#2c3e58']]);
+  // 异常设备
+  barChart('chart-equip',[['ETCH-03',9],['PHOTO-12',7],['CMP-01',5],['IMP-05',4],['CVD-02',3]]);
+  // 证据链：时序对比（正常 vs 漂移）
+  lineChart('chart-ts',
+    [{name:'TC-02（漂移）',color:'#f0564f',data:[84.9,85.0,84.8,85.1,84.9,86.6,86.7,86.8,86.7,86.9,86.7,86.8],mark:5,markLabel:'+1.8°C 阶跃'},
+     {name:'TC-01（正常）',color:'#2fbf71',data:[84.9,84.9,85.0,84.9,85.0,84.9,85.1,85.0,84.9,85.0,85.0,84.9]},
+     {name:'SPC 上限',color:'#64778f',data:[85.5,85.5,85.5,85.5,85.5,85.5,85.5,85.5,85.5,85.5,85.5,85.5]}],
+    Array.from({length:12},(_,i)=>'10-13 '+String(22+Math.floor(i/2)).padStart(2,'0')+':'+(i%2?'40':'00')),
+    {legend:true,h:230});
+  // 因果：温度偏移 vs 良率散点/趋势
+  lineChart('chart-causal',
+    [{name:'实际良率',color:'#9b6cff',data:[93.4,93.1,92.9,92.6,92.2,91.9,91.3],area:true},
+     {name:'因果模型拟合',color:'#2fc9c9',data:[93.5,93.2,92.9,92.6,92.3,92.0,91.4]}],
+    ['+0.0','+0.3','+0.6','+0.9','+1.2','+1.5','+1.8'],
+    {legend:true,h:200});
+  drawGraph();
+}
+
+/* 知识图谱（静态布局） */
+function drawGraph(){
+  const svg=$('#svg-graph');if(!svg)return;svg.innerHTML='';
+  const nodes={
+    etch:[230,60,'#2f7bff','ETCH-03'],
+    tc:[80,150,'#f5a623','参数 TC_AVG'],
+    drift:[230,165,'#f0564f','传感器漂移'],
+    over:[230,280,'#f0564f','过刻蚀'],
+    yieldN:[390,280,'#9b6cff','良率下降'],
+    photo:[400,60,'#2fbf71','PHOTO-12'],
+    dev:[70,290,'#2fbf71','DEV_CONC'],
+    def:[390,180,'#2c3e58','缺陷:显影不良']};
+  const edges=[['tc','drift',1],['drift','over',1],['over','yieldN',1],['etch','tc',0],['etch','drift',0],
+               ['photo','dev',0],['dev','def',0],['def','yieldN',0]];
+  edges.forEach(e=>{const a=nodes[e[0]],b=nodes[e[1]];
+    svg.appendChild(el('path',{d:`M ${a[0]+40} ${a[1]+16} C ${a[0]+40} ${(a[1]+b[1])/2}, ${b[0]+40} ${(a[1]+b[1])/2}, ${b[0]+40} ${b[1]-8}`,class:'e'+(e[2]?' hot':'')}));});
+  for(const k in nodes){const n=nodes[k];
+    const g=el('g',{transform:`translate(${n[0]-40},${n[1]-16})`});
+    g.appendChild(el('rect',{width:80,height:32,rx:16,fill:'#182335',stroke:n[2],class:'n'}));
+    const t=el('text',{x:40,y:20,'text-anchor':'middle'});t.textContent=n[3];g.appendChild(t);
+    svg.appendChild(g);}
+  const note=el('text',{x:230,y:322,'text-anchor':'middle',class:'svg-text',fill:'#f0564f'});
+  note.textContent='红色虚线 = 命中关联路径（2 跳，权重 0.91）';svg.appendChild(note);
+}
+
+window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderCharts,300);});
+renderCharts();
+
+/* ============ 模拟 WebSocket 推送 ============ */
+let pushSeq=8;
+setInterval(()=>{
+  if(!$('#app').classList.contains('on'))return;
+  pushSeq++;
+  const eqs=['ETCH-03','CVD-02','CMP-01','FURN-02','LITH-07'];
+  const eq=eqs[Math.floor(Math.random()*eqs.length)];
+  toast('🚨 新异常事件（anomaly.push）',`EVT-20261015-0${20+pushSeq} · ${eq} 参数越限，已触发监控 Agent`, 'err');
+  const d=$('#bell-dot');d.textContent=Math.min(9,parseInt(d.textContent)+1);
+  const ab=$('#nav-anomaly-badge');ab.textContent=Math.min(9,parseInt(ab.textContent)+1);
+},26000);
+</script>
+</body>
+</html>
